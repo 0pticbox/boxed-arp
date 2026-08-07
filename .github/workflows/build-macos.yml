@@ -1,4 +1,3 @@
-
 name: Build BOXED ARP for Logic
 
 on: [push, workflow_dispatch]
@@ -20,9 +19,11 @@ jobs:
         run: brew install xcodegen
 
       - name: Generate Xcode project
+        working-directory: ${{ github.workspace }}
         run: xcodegen generate
 
       - name: Validate project files
+        working-directory: ${{ github.workspace }}
         run: |
           plutil -lint App/Info.plist
           plutil -lint BoxedArpAU/Info.plist
@@ -31,22 +32,26 @@ jobs:
           /tmp/boxed_arp_kernel_test
 
       - name: Build Release
+        working-directory: ${{ github.workspace }}
         run: |
           set -o pipefail
           xcodebuild \
             -project BoxedArp.xcodeproj \
             -scheme BoxedArp \
             -configuration Release \
-            -derivedDataPath "$PWD/build" \
+            -derivedDataPath "$GITHUB_WORKSPACE/build" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            build | tee build.log
+            build | tee "$GITHUB_WORKSPACE/build.log"
 
       - name: Package AUv3 app
+        working-directory: ${{ github.workspace }}
         run: |
           set -e
-          PRODUCT="$PWD/build/Build/Products/Release/BOXED ARP.app"
+          PRODUCT="$GITHUB_WORKSPACE/build/Build/Products/Release/BOXED ARP.app"
           APPEX="$PRODUCT/Contents/PlugIns/BoxedArpAU.appex"
+          DIST="$GITHUB_WORKSPACE/dist"
+
           test -d "$PRODUCT"
           test -d "$APPEX"
 
@@ -54,16 +59,25 @@ jobs:
           /usr/bin/codesign --force --sign - "$PRODUCT"
           /usr/bin/codesign --verify --deep --strict --verbose=2 "$PRODUCT"
 
-          mkdir -p dist
-          /usr/bin/ditto "$PRODUCT" "dist/BOXED ARP.app"
-          cp Packaging/INSTALL.command dist/INSTALL.command
-          cp README.md dist/README.txt
-          chmod +x dist/INSTALL.command
-          /usr/bin/ditto -c -k --keepParent dist "BOXED_ARP_Logic_MIDI_FX.zip"
+          rm -rf "$DIST"
+          mkdir -p "$DIST"
+          /usr/bin/ditto "$PRODUCT" "$DIST/BOXED ARP.app"
+
+          if [ -f "$GITHUB_WORKSPACE/Packaging/INSTALL.command" ]; then
+            cp "$GITHUB_WORKSPACE/Packaging/INSTALL.command" "$DIST/INSTALL.command"
+            chmod +x "$DIST/INSTALL.command"
+          fi
+
+          if [ -f "$GITHUB_WORKSPACE/README.md" ]; then
+            cp "$GITHUB_WORKSPACE/README.md" "$DIST/README.txt"
+          fi
+
+          /usr/bin/ditto -c -k --keepParent "$DIST" "$GITHUB_WORKSPACE/BOXED_ARP_Logic_MIDI_FX.zip"
+          ls -lh "$GITHUB_WORKSPACE/BOXED_ARP_Logic_MIDI_FX.zip"
 
       - name: Upload plug-in download
         uses: actions/upload-artifact@v4
         with:
           name: BOXED-ARP-Logic-MIDI-FX
-          path: BOXED_ARP_Logic_MIDI_FX.zip
+          path: ${{ github.workspace }}/BOXED_ARP_Logic_MIDI_FX.zip
           if-no-files-found: error
