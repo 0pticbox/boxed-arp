@@ -188,7 +188,7 @@ struct PicoArpView: View {
                     .textFieldStyle(.plain)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 3)
-                    .frame(width: 62, minHeight: 20)
+                    .frame(width: 62, height: 20)
                     .background(skin.background)
                     .overlay(Rectangle().stroke(skin.accent, lineWidth: 1))
                     .onSubmit { model.commitTempoText() }
@@ -302,7 +302,7 @@ struct PicoArpView: View {
                         Text("@0pticbox")
                             .font(.opticPixel(5.5))
                             .foregroundStyle(skin.muted)
-                            .tracking(0.45)
+                            .kerning(0.45)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
