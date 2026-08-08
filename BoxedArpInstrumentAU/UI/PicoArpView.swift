@@ -302,7 +302,6 @@ struct PicoArpView: View {
                         Text("@0pticbox")
                             .font(.opticPixel(5.5))
                             .foregroundStyle(skin.muted)
-                            .kerning(0.45)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
