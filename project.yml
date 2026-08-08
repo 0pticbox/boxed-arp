@@ -8,6 +8,7 @@ settings:
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "12.0"
     CLANG_CXX_LANGUAGE_STANDARD: "c++17"
+
 targets:
   BoxedArp:
     type: application
@@ -22,26 +23,29 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGNING_ALLOWED: NO
     dependencies:
-      - target: BoxedArpAU
+      - target: BoxedArpMIDIAU
         embed: true
-  BoxedArpAU:
+      - target: BoxedArpInstrumentAU
+        embed: true
+
+  BoxedArpMIDIAU:
     type: app-extension
     platform: macOS
     sources:
-      - path: BoxedArpAU/AudioUnit
-      - path: BoxedArpAU/DSP
-      - path: BoxedArpAU/UI
-      - path: BoxedArpAU/Config/BoxedArp-Bridging-Header.h
+      - path: BoxedArpMIDIAU/AudioUnit
+      - path: BoxedArpMIDIAU/DSP
+      - path: BoxedArpMIDIAU/UI
+      - path: BoxedArpMIDIAU/Config/BoxedArp-Bridging-Header.h
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.opticbox.boxedarp.au
-        PRODUCT_NAME: BoxedArpAU
-        PRODUCT_MODULE_NAME: BoxedArpAU
-        INFOPLIST_FILE: BoxedArpAU/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.opticbox.boxedarp.midi
+        PRODUCT_NAME: BoxedArpMIDIAU
+        PRODUCT_MODULE_NAME: BoxedArpMIDIAU
+        INFOPLIST_FILE: BoxedArpMIDIAU/Info.plist
         GENERATE_INFOPLIST_FILE: NO
-        SWIFT_OBJC_BRIDGING_HEADER: BoxedArpAU/Config/BoxedArp-Bridging-Header.h
-        HEADER_SEARCH_PATHS: "$(SRCROOT)/BoxedArpAU/DSP"
-        CODE_SIGN_ENTITLEMENTS: BoxedArpAU/BoxedArpAU.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: BoxedArpMIDIAU/Config/BoxedArp-Bridging-Header.h
+        HEADER_SEARCH_PATHS: "$(SRCROOT)/BoxedArpMIDIAU/DSP"
+        CODE_SIGN_ENTITLEMENTS: BoxedArpMIDIAU/BoxedArpAU.entitlements
         APPLICATION_EXTENSION_API_ONLY: YES
         CODE_SIGNING_ALLOWED: NO
     dependencies:
@@ -49,12 +53,43 @@ targets:
       - sdk: AVFoundation.framework
       - sdk: CoreAudioKit.framework
       - sdk: Cocoa.framework
+
+  BoxedArpInstrumentAU:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: BoxedArpInstrumentAU/Audio
+      - path: BoxedArpInstrumentAU/DSP
+      - path: BoxedArpInstrumentAU/UI
+      - path: BoxedArpInstrumentAU/BoxedArpAU-Bridging-Header.h
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.opticbox.boxedarp.instrument
+        PRODUCT_NAME: BoxedArpInstrumentAU
+        PRODUCT_MODULE_NAME: BoxedArpInstrumentAU
+        INFOPLIST_FILE: BoxedArpInstrumentAU/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_OBJC_BRIDGING_HEADER: BoxedArpInstrumentAU/BoxedArpAU-Bridging-Header.h
+        CODE_SIGN_ENTITLEMENTS: BoxedArpInstrumentAU/BoxedArpAU.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        CODE_SIGNING_ALLOWED: NO
+    dependencies:
+      - sdk: AudioToolbox.framework
+      - sdk: AVFoundation.framework
+      - sdk: CoreAudioKit.framework
+      - sdk: CoreAudio.framework
+      - sdk: CoreMIDI.framework
+      - sdk: SwiftUI.framework
+      - sdk: AppKit.framework
+      - sdk: UniformTypeIdentifiers.framework
+
 schemes:
   BoxedArp:
     build:
       targets:
         BoxedArp: all
-        BoxedArpAU: all
+        BoxedArpMIDIAU: all
+        BoxedArpInstrumentAU: all
     run:
       config: Debug
     archive:

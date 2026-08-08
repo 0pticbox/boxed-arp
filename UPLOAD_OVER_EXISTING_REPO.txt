@@ -1,0 +1,17 @@
+UPLOAD THIS PACKAGE TO THE ROOT OF YOUR EXISTING boxed-arp REPO.
+
+Important replacements:
+  project.yml
+  README.md
+  App/
+  Packaging/
+  Tests/
+  .github/workflows/build-macos.yml
+
+Important new folders:
+  BoxedArpMIDIAU/
+  BoxedArpInstrumentAU/
+
+Your older BoxedArpAU/ folder can remain in the repo; project.yml no longer references it.
+After committing, open Actions and run:
+  Build BOXED ARP for GarageBand + Logic
