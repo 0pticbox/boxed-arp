@@ -1,4 +1,4 @@
-name: Build BOXED ARP for Logic
+name: Build BOXED ARP for GarageBand + Logic
 
 on: [push, workflow_dispatch]
 
@@ -25,11 +25,14 @@ jobs:
       - name: Validate project files
         working-directory: ${{ github.workspace }}
         run: |
+          set -e
           plutil -lint App/Info.plist
-          plutil -lint BoxedArpAU/Info.plist
-          plutil -lint BoxedArpAU/BoxedArpAU.entitlements
-          c++ -std=c++17 Tests/kernel_smoke_test.cpp BoxedArpAU/DSP/BoxedArpKernel.cpp -o /tmp/boxed_arp_kernel_test
-          /tmp/boxed_arp_kernel_test
+          plutil -lint BoxedArpMIDIAU/Info.plist
+          plutil -lint BoxedArpMIDIAU/BoxedArpAU.entitlements
+          plutil -lint BoxedArpInstrumentAU/Info.plist
+          plutil -lint BoxedArpInstrumentAU/BoxedArpAU.entitlements
+          c++ -std=c++17 Tests/midi_fx_kernel_smoke_test.cpp BoxedArpMIDIAU/DSP/BoxedArpKernel.cpp -o /tmp/boxed_arp_midi_test
+          /tmp/boxed_arp_midi_test
 
       - name: Build Release
         working-directory: ${{ github.workspace }}
@@ -44,40 +47,43 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             build | tee "$GITHUB_WORKSPACE/build.log"
 
-      - name: Package AUv3 app
+      - name: Package GarageBand + Logic app
         working-directory: ${{ github.workspace }}
         run: |
           set -e
           PRODUCT="$GITHUB_WORKSPACE/build/Build/Products/Release/BOXED ARP.app"
-          APPEX="$PRODUCT/Contents/PlugIns/BoxedArpAU.appex"
+          MIDI_APPEX="$PRODUCT/Contents/PlugIns/BoxedArpMIDIAU.appex"
+          INST_APPEX="$PRODUCT/Contents/PlugIns/BoxedArpInstrumentAU.appex"
           DIST="$GITHUB_WORKSPACE/dist"
 
           test -d "$PRODUCT"
-          test -d "$APPEX"
+          test -d "$MIDI_APPEX"
+          test -d "$INST_APPEX"
 
-          /usr/bin/codesign --force --sign - "$APPEX"
+          echo "Built extensions:"
+          ls -la "$PRODUCT/Contents/PlugIns"
+
+          /usr/bin/codesign --force --sign - "$MIDI_APPEX"
+          /usr/bin/codesign --force --sign - "$INST_APPEX"
           /usr/bin/codesign --force --sign - "$PRODUCT"
           /usr/bin/codesign --verify --deep --strict --verbose=2 "$PRODUCT"
 
           rm -rf "$DIST"
           mkdir -p "$DIST"
           /usr/bin/ditto "$PRODUCT" "$DIST/BOXED ARP.app"
-
-          if [ -f "$GITHUB_WORKSPACE/Packaging/INSTALL.command" ]; then
-            cp "$GITHUB_WORKSPACE/Packaging/INSTALL.command" "$DIST/INSTALL.command"
-            chmod +x "$DIST/INSTALL.command"
-          fi
+          cp "$GITHUB_WORKSPACE/Packaging/INSTALL.command" "$DIST/INSTALL.command"
+          chmod +x "$DIST/INSTALL.command"
 
           if [ -f "$GITHUB_WORKSPACE/README.md" ]; then
             cp "$GITHUB_WORKSPACE/README.md" "$DIST/README.txt"
           fi
 
-          /usr/bin/ditto -c -k --keepParent "$DIST" "$GITHUB_WORKSPACE/BOXED_ARP_Logic_MIDI_FX.zip"
-          ls -lh "$GITHUB_WORKSPACE/BOXED_ARP_Logic_MIDI_FX.zip"
+          /usr/bin/ditto -c -k --keepParent "$DIST" "$GITHUB_WORKSPACE/BOXED_ARP_GarageBand_Logic.zip"
+          ls -lh "$GITHUB_WORKSPACE/BOXED_ARP_GarageBand_Logic.zip"
 
-      - name: Upload plug-in download
+      - name: Upload combined plug-in download
         uses: actions/upload-artifact@v4
         with:
-          name: BOXED-ARP-Logic-MIDI-FX
-          path: ${{ github.workspace }}/BOXED_ARP_Logic_MIDI_FX.zip
+          name: BOXED-ARP-GarageBand-Logic
+          path: ${{ github.workspace }}/BOXED_ARP_GarageBand_Logic.zip
           if-no-files-found: error
